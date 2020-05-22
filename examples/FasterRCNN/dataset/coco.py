@@ -230,19 +230,19 @@ def register_coco(basedir):
 
     Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014.
     """
-
+    print("register_coco")
     # 80 names for COCO
     # For your own coco-format dataset, change this.
     # class_names = [
     #     "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
     # class_names = ["BG"] + class_names
     class_names = ["class1", "class2", "class3", "class4", "class5", "class6"]
-
+    class_names = ["BG"] + class_names
     # for split in ["train2017", "val2017", "train2014", "val2014",
     #               "valminusminival2014", "minival2014", "val2017_100"]:
     for split in ["Train", "Test"]:        
         name = "DAGM_" + split
-        name = "coco_" + split
+        # name = "coco_" + split
         DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
         DatasetRegistry.register_metadata(name, 'class_names', class_names)
 

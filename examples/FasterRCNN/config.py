@@ -93,8 +93,8 @@ _C.MODE_FPN = True
 
 # dataset -----------------------
 _C.DATA.BASEDIR = ''
-_C.DATA.TRAIN = ('Train',)   # i.e. trainval35k
-_C.DATA.VAL = ('Test',)  # AKA minival2014
+_C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
+_C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
 _C.DATA.BASEDIR = ''
 # _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
 # _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
@@ -251,7 +251,7 @@ def finalize_configs(is_training):
     from dataset import DatasetRegistry
     datasets = list(_C.DATA.TRAIN) + list(_C.DATA.VAL)
 
-    _C.DATA.CLASS_NAMES = ["class1", "class2", "class3", "class4", "class5", "class6"]
+    _C.DATA.CLASS_NAMES = ["BG", "class1", "class2", "class3", "class4", "class5", "class6"]
     # print(datasets[0])
     # _C.DATA.CLASS_NAMES = DatasetRegistry.get_metadata(datasets[0], "class_names")
     # print(_C.DATA.CLASS_NAMES)

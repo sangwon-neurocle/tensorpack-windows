@@ -46,7 +46,7 @@ if __name__ == '__main__':
     print("cfg")
     print(f"{cfg}")
     register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
-    register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
+    # register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
 
     # Setup logging ...
     is_horovod = cfg.TRAINER == 'horovod'

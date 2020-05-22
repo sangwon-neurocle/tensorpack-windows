@@ -41,16 +41,26 @@ def print_class_histogram(roidbs):
     class_names = DatasetRegistry.get_metadata(cfg.DATA.TRAIN[0], 'class_names')
     # labels are in [1, NUM_CATEGORY], hence +2 for bins
     hist_bins = np.arange(cfg.DATA.NUM_CATEGORY + 2)
+    print(f"hist_bins : {hist_bins}")
 
     # Histogram of ground-truth objects
     gt_hist = np.zeros((cfg.DATA.NUM_CATEGORY + 1,), dtype=np.int)
     for entry in roidbs:
         # filter crowd?
+        # print(f"entry : {entry}")
         gt_inds = np.where((entry["class"] > 0) & (entry["is_crowd"] == 0))[0]
         gt_classes = entry["class"][gt_inds]
+        # print(f"gt_inds : {gt_inds}")
+        # print(f"gt_classes : {gt_classes}")
         if len(gt_classes):
+            # print(class_names)
+            # print(gt_classes.max(), " ", len(class_names) - 1)
             assert gt_classes.max() <= len(class_names) - 1
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
+    print("************************************************************")
+    print(f"gt_hist : {gt_hist}")
+    print("************************************************************")
+
     data = list(itertools.chain(*[[class_names[i + 1], v] for i, v in enumerate(gt_hist[1:])]))
     COL = min(6, len(data))
     total_instances = sum(data[1::2])
