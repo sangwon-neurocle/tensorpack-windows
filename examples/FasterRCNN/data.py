@@ -41,7 +41,7 @@ def print_class_histogram(roidbs):
     class_names = DatasetRegistry.get_metadata(cfg.DATA.TRAIN[0], 'class_names')
     # labels are in [1, NUM_CATEGORY], hence +2 for bins
     hist_bins = np.arange(cfg.DATA.NUM_CATEGORY + 2)
-    print(f"hist_bins : {hist_bins}")
+    # print(f"hist_bins : {hist_bins}")
 
     # Histogram of ground-truth objects
     gt_hist = np.zeros((cfg.DATA.NUM_CATEGORY + 1,), dtype=np.int)
@@ -355,6 +355,7 @@ def get_train_dataflow():
     # Filter out images that have no gt boxes, but this filter shall not be applied for testing.
     # The model does support training with empty images, but it is not useful for COCO.
     num = len(roidbs)
+    print(f"num : {num}")
     if cfg.DATA.FILTER_EMPTY_ANNOTATIONS:
         roidbs = list(filter(lambda img: len(img["boxes"][img["is_crowd"] == 0]) > 0, roidbs))       
     logger.info(

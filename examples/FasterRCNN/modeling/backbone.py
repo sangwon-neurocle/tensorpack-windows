@@ -192,6 +192,8 @@ def resnet_conv5(image, num_block):
 
 
 def resnet_fpn_backbone(image, num_blocks):
+    # print(f"image : {image.shape}")
+    
     freeze_at = cfg.BACKBONE.FREEZE_AT
     shape2d = tf.shape(image)[2:]
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
@@ -217,4 +219,20 @@ def resnet_fpn_backbone(image, num_blocks):
         c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
     # 32x downsampling up to now
     # size of c5: ceil(input/32)
+    
+    # c2 = tf.Print(c2, [tf.shape(c2)], message="c2 : ", summarize=100)
+    # c3 = tf.Print(c3, [tf.shape(c3)], message="c3 : ", summarize=100)
+    # c4 = tf.Print(c4, [tf.shape(c4)], message="c4 : ", summarize=100)
+    # c5 = tf.Print(c5, [tf.shape(c5)], message="c5 : ", summarize=100)
+    # c4 = tf.Print(c4, [tf.shape(c4)], "c4 : ")
+    # c5 = tf.Print(c5, [tf.shape(c5)], "c5 : ")
+    # image : [1 3 697...]
+    # c2 : [1 256 176...]
+    # c5 : [1 2048 22...]
+    # c3 : [1 512 88...]
+    # c4 : [1 1024 44...]
     return c2, c3, c4, c5
+    # c2 : (1, 256, 64, 64)
+    # c3 : (1, 512, 128, 128)
+    # c4 : (1, 1024, 256, 256)
+    # c5 : (1, 2048, 512, 512)

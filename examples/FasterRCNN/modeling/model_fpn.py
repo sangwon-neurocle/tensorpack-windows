@@ -27,6 +27,12 @@ def fpn_model(features):
     Returns:
         [tf.Tensor]: FPN features p2-p6
     """
+
+    #     print(f"c{i+2} : {c.shape}")
+    # c2 : (1, 256, ?, ?)
+    # c3 : (1, 512, ?, ?)
+    # c4 : (1, 1024, ?, ?)
+    # c5 : (1, 2048, ?, ?)
     assert len(features) == 4, features
     num_channel = cfg.FPN.NUM_CHANNEL
 

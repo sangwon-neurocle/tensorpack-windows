@@ -9,7 +9,7 @@ from tensorpack import *
 from tensorpack.tfutils import collect_env_info
 from tensorpack.tfutils.common import get_tf_version_tuple
 
-from dataset import register_coco, register_balloon
+from dataset.coco import register_coco, register_DAGM
 from config import config as cfg
 from config import finalize_configs
 from data import get_train_dataflow
@@ -45,7 +45,8 @@ if __name__ == '__main__':
 
     print("cfg")
     print(f"{cfg}")
-    register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    # register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    register_DAGM(cfg.DATA.BASEDIR)
     # register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
 
     # Setup logging ...
@@ -58,7 +59,7 @@ if __name__ == '__main__':
 
     finalize_configs(is_training=True)
 
-    print(f"_C.DATA.CLASS_NAMES : {cfg.DATA.CLASS_NAMES}")
+    # print(f"_C.DATA.CLASS_NAMES : {cfg.DATA.CLASS_NAMES}")
 
     # Create model
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
@@ -106,14 +107,14 @@ if __name__ == '__main__':
             for dataset in cfg.DATA.VAL
         ])
 
-    if is_horovod and hvd.rank() > 0:
-        session_init = None
+    # if is_horovod and hvd.rank() > 0:
+    #     session_init = None
+    # else:
+    if args.load:
+        # ignore mismatched values, so you can `--load` a model for fine-tuning
+        session_init = SmartInit(args.load, ignore_mismatch=True)
     else:
-        if args.load:
-            # ignore mismatched values, so you can `--load` a model for fine-tuning
-            session_init = SmartInit(args.load, ignore_mismatch=True)
-        else:
-            session_init = SmartInit(cfg.BACKBONE.WEIGHTS)
+        session_init = SmartInit(cfg.BACKBONE.WEIGHTS)
     print("MODEL\n")
     print(f"{MODEL}")
     traincfg = TrainConfig(
@@ -121,8 +122,8 @@ if __name__ == '__main__':
         data=QueueInput(train_dataflow),
         callbacks=callbacks,
         steps_per_epoch=stepnum,
-        max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
-        # max_epoch=5,
+        # max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
+        max_epoch=20,
         session_init=session_init,
         starting_epoch=cfg.TRAIN.STARTING_EPOCH
     )

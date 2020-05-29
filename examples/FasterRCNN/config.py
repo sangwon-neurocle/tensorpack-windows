@@ -129,7 +129,7 @@ _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN, None
-_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
+_C.BACKBONE.FREEZE_AT = 0  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -251,9 +251,12 @@ def finalize_configs(is_training):
     from dataset import DatasetRegistry
     datasets = list(_C.DATA.TRAIN) + list(_C.DATA.VAL)
 
-    _C.DATA.CLASS_NAMES = ["BG", "class1", "class2", "class3", "class4", "class5", "class6"]
+    # _C.DATA.CLASS_NAMES = ["BG", "class1", "class2", "class3", "class4", "class5", "class6"]
+    # _C.DATA.CLASS_NAMES = [
+    #     "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
+    # _C.DATA.CLASS_NAMES = ["BG"] + _C.DATA.CLASS_NAMES
     # print(datasets[0])
-    # _C.DATA.CLASS_NAMES = DatasetRegistry.get_metadata(datasets[0], "class_names")
+    _C.DATA.CLASS_NAMES = DatasetRegistry.get_metadata(datasets[0], "class_names")
     # print(_C.DATA.CLASS_NAMES)
     _C.DATA.NUM_CATEGORY = len(_C.DATA.CLASS_NAMES) - 1
 

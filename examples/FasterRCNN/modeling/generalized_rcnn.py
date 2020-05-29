@@ -57,16 +57,26 @@ class GeneralizedRCNN(ModelDesc):
         return ['image'], out
 
     def build_graph(self, *inputs):
+        print(f"self.input_names : {self.input_names}")
         inputs = dict(zip(self.input_names, inputs))
         if "gt_masks_packed" in inputs:
             gt_masks = tf.cast(unpackbits_masks(inputs.pop("gt_masks_packed")), tf.uint8, name="gt_masks")
             inputs["gt_masks"] = gt_masks
 
+        # inputs['image'] = tf.Print(inputs['image'], [tf.shape(inputs['image'])], message="image before preprocess : ", summarize=100)
+
         image = self.preprocess(inputs['image'])     # 1CHW
+
+        # image = tf.Print(image, [tf.shape(image)], message="image after preprocess : ", summarize=100)
+
 
         features = self.backbone(image)
         anchor_inputs = {k: v for k, v in inputs.items() if k.startswith('anchor_')}
+        # anchor_inputs = tf.Print(anchor_inputs, [anchor_inputs], message="anchor_inputs : ", summarize=100)
         proposals, rpn_losses = self.rpn(image, features, anchor_inputs)  # inputs?
+        # proposals = tf.Print(proposals, [tf.shape(proposals)], message="proposals : ", summarize=100)
+        # rpn_losses = tf.Print(rpn_losses, [tf.shape(rpn_losses)], message="rpn_losses : ", summarize=100)
+
 
         targets = [inputs[k] for k in ['gt_boxes', 'gt_labels', 'gt_masks'] if k in inputs]
         gt_boxes_area = tf.reduce_mean(tf_area(inputs["gt_boxes"]), name='mean_gt_box_area')
@@ -117,7 +127,6 @@ class ResNetC4Model(GeneralizedRCNN):
         return backbone
 
     def rpn(self, image, features, inputs):
-        print(f"rpn({image.shape} {features} {inputs.shape}")
         featuremap = features[0]
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
         anchors = RPNAnchors(
@@ -231,11 +240,17 @@ class ResNetFPNModel(GeneralizedRCNN):
                 anchors[i] = anchors[i].narrow_to(p23456[i])
 
     def backbone(self, image):
+        # image = tf.Print(image, [tf.shape(image)], message="backbone(image) : ", summarize=100)
+
         c2345 = resnet_fpn_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS)
         p23456 = fpn_model('fpn', c2345)
         return p23456
 
     def rpn(self, image, features, inputs):
+        print(f"rpn({image.shape} {features} {len(inputs)}")
+        
+        # rpn((1, 3, ?, ?) [<tf.Tensor 'tower-pred-0/fpn/posthoc_3x3_p2/output:0' shape=(1, 256, ?, ?) dtype=float32>, <tf.Tensor 'tower-pred-0/fpn/posthoc_3x3_p3/output:0' shape=(1, 256, ?, ?) dtype=float32>, <tf.Tensor 'tower-pred-0/fpn/posthoc_3x3_p4/output:0' shape=(1, 256, ?, ?) dtype=float32>, <tf.Tensor 'tower-pred-0/fpn/posthoc_3x3_p5/output:0' shape=(1, 256, ?, ?) dtype=float32>, <tf.Tensor 'tower-pred-0/fpn/maxpool_p6/output:0' shape=(1, 256, ?, ?) dtype=float32>] 10
+
         assert len(cfg.RPN.ANCHOR_SIZES) == len(cfg.FPN.ANCHOR_STRIDES)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
