@@ -199,8 +199,11 @@ def resnet_fpn_backbone(image, num_blocks):
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
     new_shape2d = tf.cast(tf.math.ceil(tf.cast(shape2d, tf.float32) / mult) * mult, tf.int32)
     pad_shape2d = new_shape2d - shape2d
+    # print(f"freeze_at : {freeze_at} mult : {mult} new_shape2d : {new_shape2d} pad_shape2d : {pad_shape2d}")
+    # freeze_at : 0 mult : 32.0 new_shape2d : Tensor("Cast_1:0", shape=(2,), dtype=int32) pad_shape2d : Tensor("sub:0", shape=(2,), dtype=int32)
     assert len(num_blocks) == 4, num_blocks
     with backbone_scope(freeze=freeze_at > 0):
+        print("************************************FIRST************************************")
         chan = image.shape[1]
         pad_base = maybe_reverse_pad(2, 3)
         l = tf.pad(image, tf.stack(
@@ -212,8 +215,10 @@ def resnet_fpn_backbone(image, num_blocks):
         l = tf.pad(l, [[0, 0], [0, 0], maybe_reverse_pad(0, 1), maybe_reverse_pad(0, 1)])
         l = MaxPooling('pool0', l, 3, strides=2, padding='VALID')
     with backbone_scope(freeze=freeze_at > 1):
+        print("************************************SECOND************************************")
         c2 = resnet_group('group0', l, resnet_bottleneck, 64, num_blocks[0], 1)
     with backbone_scope(freeze=False):
+        print("************************************THIRD************************************")
         c3 = resnet_group('group1', c2, resnet_bottleneck, 128, num_blocks[1], 2)
         c4 = resnet_group('group2', c3, resnet_bottleneck, 256, num_blocks[2], 2)
         c5 = resnet_group('group3', c4, resnet_bottleneck, 512, num_blocks[3], 2)
@@ -226,11 +231,6 @@ def resnet_fpn_backbone(image, num_blocks):
     # c5 = tf.Print(c5, [tf.shape(c5)], message="c5 : ", summarize=100)
     # c4 = tf.Print(c4, [tf.shape(c4)], "c4 : ")
     # c5 = tf.Print(c5, [tf.shape(c5)], "c5 : ")
-    # image : [1 3 697...]
-    # c2 : [1 256 176...]
-    # c5 : [1 2048 22...]
-    # c3 : [1 512 88...]
-    # c4 : [1 1024 44...]
     return c2, c3, c4, c5
     # c2 : (1, 256, 64, 64)
     # c3 : (1, 512, 128, 128)

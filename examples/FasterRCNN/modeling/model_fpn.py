@@ -29,10 +29,10 @@ def fpn_model(features):
     """
 
     #     print(f"c{i+2} : {c.shape}")
-    # c2 : (1, 256, ?, ?)
-    # c3 : (1, 512, ?, ?)
-    # c4 : (1, 1024, ?, ?)
-    # c5 : (1, 2048, ?, ?)
+    # c2 : (1, 256, 64, 64)
+    # c3 : (1, 512, 128, 128)
+    # c4 : (1, 1024, 256, 256)
+    # c5 : (1, 2048, 512, 512)
     assert len(features) == 4, features
     num_channel = cfg.FPN.NUM_CHANNEL
 
@@ -43,9 +43,9 @@ def fpn_model(features):
             resize = tf.compat.v2.image.resize_images
             with tf.name_scope(name):
                 shp2d = tf.shape(x)[2:]
-                x = tf.transpose(x, [0, 2, 3, 1])
+                x = tf.transpose(x, [0, 2, 3, 1]) # 1CHW -> 1HWC
                 x = resize(x, shp2d * 2, 'nearest')
-                x = tf.transpose(x, [0, 3, 1, 2])
+                x = tf.transpose(x, [0, 3, 1, 2]) # 1HWC -> 1CHW
                 return x
         except AttributeError:
             return FixedUnPooling(
@@ -57,8 +57,8 @@ def fpn_model(features):
                   kernel_initializer=tf.variance_scaling_initializer(scale=1.)):
         lat_2345 = [Conv2D('lateral_1x1_c{}'.format(i + 2), c, num_channel, 1)
                     for i, c in enumerate(features)]
-        if use_gn:
-            lat_2345 = [GroupNorm('gn_c{}'.format(i + 2), c) for i, c in enumerate(lat_2345)]
+        # if use_gn:
+        #     lat_2345 = [GroupNorm('gn_c{}'.format(i + 2), c) for i, c in enumerate(lat_2345)]
         lat_sum_5432 = []
         for idx, lat in enumerate(lat_2345[::-1]):
             if idx == 0:
@@ -68,8 +68,8 @@ def fpn_model(features):
                 lat_sum_5432.append(lat)
         p2345 = [Conv2D('posthoc_3x3_p{}'.format(i + 2), c, num_channel, 3)
                  for i, c in enumerate(lat_sum_5432[::-1])]
-        if use_gn:
-            p2345 = [GroupNorm('gn_p{}'.format(i + 2), c) for i, c in enumerate(p2345)]
+        # if use_gn:
+        #     p2345 = [GroupNorm('gn_p{}'.format(i + 2), c) for i, c in enumerate(p2345)]
         p6 = MaxPooling('maxpool_p6', p2345[-1], pool_size=1, strides=2, data_format='channels_first', padding='VALID')
         return p2345 + [p6]
 

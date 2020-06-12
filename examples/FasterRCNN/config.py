@@ -88,16 +88,15 @@ _C = config     # short alias to avoid coding
 
 # mode flags ---------------------
 _C.TRAINER = 'replicated'  # options: 'horovod', 'replicated'
-_C.MODE_MASK = False       # Faster R-CNN or Mask R-CNN
+_C.MODE_MASK = True       # Faster R-CNN or Mask R-CNN
 _C.MODE_FPN = True
 
 # dataset -----------------------
 _C.DATA.BASEDIR = ''
-_C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
-_C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
-_C.DATA.BASEDIR = ''
-# _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
-# _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
+# _C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
+# _C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
+_C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
+_C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
 
 # # All available dataset names are defined in `dataset/coco.py:register_coco`.
 # # All TRAIN dataset will be concatenated for training.
@@ -129,7 +128,7 @@ _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN, None
-_C.BACKBONE.FREEZE_AT = 0  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
+_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.

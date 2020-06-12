@@ -18,6 +18,7 @@ from tensorpack.tfutils.export import ModelExporter
 from tensorpack.utils import fs, logger
 
 from dataset import DatasetRegistry, register_coco, register_balloon
+from dataset.coco import register_DAGM
 from config import config as cfg
 from config import finalize_configs
 from data import get_eval_dataflow, get_train_dataflow
@@ -126,8 +127,7 @@ if __name__ == '__main__':
     if args.config:
         cfg.update_args(args.config)
     register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
-    register_balloon(cfg.DATA.BASEDIR)
-
+    # register_DAGM(cfg.DATA.BASEDIR)
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     if not tf.test.is_gpu_available():

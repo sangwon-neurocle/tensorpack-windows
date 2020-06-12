@@ -110,6 +110,14 @@ def draw_final_outputs_blackwhite(img, results):
     boxes = np.asarray([r.box for r in results])
 
     all_masks = [r.mask for r in results]
+    # print(f"results : {results}")
+    # print(f"boxes : {boxes}")
+    # print(f"all_masks : {all_masks}")
+    # summ = 0
+    # for mask in all_masks:
+    #     summ += mask.sum()
+    # print(f"all_masks.sum() : {summ}")
+
     if all_masks[0] is not None:
         m = all_masks[0] > 0
         for m2 in all_masks[1:]:

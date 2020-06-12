@@ -59,9 +59,11 @@ class GeneralizedRCNN(ModelDesc):
     def build_graph(self, *inputs):
         print(f"self.input_names : {self.input_names}")
         inputs = dict(zip(self.input_names, inputs))
+        print(f"inputs : {inputs}")
         if "gt_masks_packed" in inputs:
             gt_masks = tf.cast(unpackbits_masks(inputs.pop("gt_masks_packed")), tf.uint8, name="gt_masks")
             inputs["gt_masks"] = gt_masks
+            print("inputs[gt_masks] :",  inputs["gt_masks"])
 
         # inputs['image'] = tf.Print(inputs['image'], [tf.shape(inputs['image'])], message="image before preprocess : ", summarize=100)
 
@@ -69,8 +71,13 @@ class GeneralizedRCNN(ModelDesc):
 
         # image = tf.Print(image, [tf.shape(image)], message="image after preprocess : ", summarize=100)
 
-
+        
         features = self.backbone(image)
+        for i, feature in enumerate(features):
+            feature = tf.Print(feature, [tf.shape(feature)], message=f"feature p{i+2} : ", summarize=100)
+
+        # 여기까지 봄
+
         anchor_inputs = {k: v for k, v in inputs.items() if k.startswith('anchor_')}
         # anchor_inputs = tf.Print(anchor_inputs, [anchor_inputs], message="anchor_inputs : ", summarize=100)
         proposals, rpn_losses = self.rpn(image, features, anchor_inputs)  # inputs?
@@ -101,117 +108,6 @@ class GeneralizedRCNN(ModelDesc):
                     G.get_tensor_by_name(name + ':0')
                 except KeyError:
                     raise KeyError("Your model does not define the tensor '{}' in inference context.".format(name))
-
-
-class ResNetC4Model(GeneralizedRCNN):
-    def inputs(self):
-        ret = [
-            tf.TensorSpec((None, None, 3), tf.float32, 'image'),
-            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR), tf.int32, 'anchor_labels'),
-            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR, 4), tf.float32, 'anchor_boxes'),
-            tf.TensorSpec((None, 4), tf.float32, 'gt_boxes'),
-            tf.TensorSpec((None,), tf.int64, 'gt_labels')]  # all > 0
-        print("cfg.MODE_MASK : %d\n", cfg.MODE_MASK)
-        if cfg.MODE_MASK:
-            ret.append(
-                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks_packed')
-            )   # NR_GT x height x ceil(width/8), packed groundtruth masks
-        return ret
-
-    def backbone(self, image):
-        backbone = [resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS[:3])]
-        for b in backbone:
-            print("b.shape")
-            print(b.shape)
-        # return [resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS[:3])]
-        return backbone
-
-    def rpn(self, image, features, inputs):
-        featuremap = features[0]
-        rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
-        anchors = RPNAnchors(
-            get_all_anchors(
-                stride=cfg.RPN.ANCHOR_STRIDE, sizes=cfg.RPN.ANCHOR_SIZES,
-                ratios=cfg.RPN.ANCHOR_RATIOS, max_size=cfg.PREPROC.MAX_SIZE),
-            inputs['anchor_labels'], inputs['anchor_boxes'])
-        anchors = anchors.narrow_to(featuremap)
-
-        image_shape2d = tf.shape(image)[2:]     # h,w
-        pred_boxes_decoded = anchors.decode_logits(rpn_box_logits)  # fHxfWxNAx4, floatbox
-        proposal_boxes, proposal_scores = generate_rpn_proposals(
-            tf.reshape(pred_boxes_decoded, [-1, 4]),
-            tf.reshape(rpn_label_logits, [-1]),
-            image_shape2d,
-            cfg.RPN.TRAIN_PRE_NMS_TOPK if self.training else cfg.RPN.TEST_PRE_NMS_TOPK,
-            cfg.RPN.TRAIN_POST_NMS_TOPK if self.training else cfg.RPN.TEST_POST_NMS_TOPK)
-
-        if self.training:
-            losses = rpn_losses(
-                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
-        else:
-            losses = []
-
-        return BoxProposals(proposal_boxes), losses
-
-    def roi_heads(self, image, features, proposals, targets):
-        image_shape2d = tf.shape(image)[2:]     # h,w
-        featuremap = features[0]
-
-        gt_boxes, gt_labels, *_ = targets
-
-        if self.training:
-            # sample proposal boxes in training
-            proposals = sample_fast_rcnn_targets(proposals.boxes, gt_boxes, gt_labels)
-        # The boxes to be used to crop RoIs.
-        # Use all proposal boxes in inference
-
-        boxes_on_featuremap = proposals.boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE)
-        roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
-
-        feature_fastrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])    # nxcx7x7
-        # Keep C5 feature to be shared with mask branch
-        feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CATEGORY)
-
-        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits, gt_boxes,
-                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
-
-        if self.training:
-            all_losses = fastrcnn_head.losses()
-
-            if cfg.MODE_MASK:
-                gt_masks = targets[2]
-                # maskrcnn loss
-                # In training, mask branch shares the same C5 feature.
-                fg_feature = tf.gather(feature_fastrcnn, proposals.fg_inds())
-                mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', fg_feature, cfg.DATA.NUM_CATEGORY, num_convs=0)   # #fg x #cat x 14x14
-
-                target_masks_for_fg = crop_and_resize(
-                    tf.expand_dims(gt_masks, 1),
-                    proposals.fg_boxes(),
-                    proposals.fg_inds_wrt_gt, 14,
-                    pad_border=False)  # nfg x 1x14x14
-                target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
-                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
-            return all_losses
-        else:
-            decoded_boxes = fastrcnn_head.decoded_output_boxes()
-            decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
-            label_scores = fastrcnn_head.output_scores(name='fastrcnn_all_scores')
-            final_boxes, final_scores, final_labels = fastrcnn_predictions(
-                decoded_boxes, label_scores, name_scope='output')
-
-            if cfg.MODE_MASK:
-                roi_resized = roi_align(featuremap, final_boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE), 14)
-                feature_maskrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])
-                mask_logits = maskrcnn_upXconv_head(
-                    'maskrcnn', feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 0)   # #result x #cat x 14x14
-                indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
-                final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
-                tf.sigmoid(final_mask_logits, name='output/masks')
-            return []
-
 
 class ResNetFPNModel(GeneralizedRCNN):
 
@@ -344,5 +240,115 @@ class ResNetFPNModel(GeneralizedRCNN):
                     'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
+                tf.sigmoid(final_mask_logits, name='output/masks')
+            return []
+
+
+class ResNetC4Model(GeneralizedRCNN):
+    def inputs(self):
+        ret = [
+            tf.TensorSpec((None, None, 3), tf.float32, 'image'),
+            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR), tf.int32, 'anchor_labels'),
+            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR, 4), tf.float32, 'anchor_boxes'),
+            tf.TensorSpec((None, 4), tf.float32, 'gt_boxes'),
+            tf.TensorSpec((None,), tf.int64, 'gt_labels')]  # all > 0
+        print("cfg.MODE_MASK : %d\n", cfg.MODE_MASK)
+        if cfg.MODE_MASK:
+            ret.append(
+                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks_packed')
+            )   # NR_GT x height x ceil(width/8), packed groundtruth masks
+        return ret
+
+    def backbone(self, image):
+        backbone = [resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS[:3])]
+        for b in backbone:
+            print("b.shape")
+            print(b.shape)
+        # return [resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS[:3])]
+        return backbone
+
+    def rpn(self, image, features, inputs):
+        featuremap = features[0]
+        rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
+        anchors = RPNAnchors(
+            get_all_anchors(
+                stride=cfg.RPN.ANCHOR_STRIDE, sizes=cfg.RPN.ANCHOR_SIZES,
+                ratios=cfg.RPN.ANCHOR_RATIOS, max_size=cfg.PREPROC.MAX_SIZE),
+            inputs['anchor_labels'], inputs['anchor_boxes'])
+        anchors = anchors.narrow_to(featuremap)
+
+        image_shape2d = tf.shape(image)[2:]     # h,w
+        pred_boxes_decoded = anchors.decode_logits(rpn_box_logits)  # fHxfWxNAx4, floatbox
+        proposal_boxes, proposal_scores = generate_rpn_proposals(
+            tf.reshape(pred_boxes_decoded, [-1, 4]),
+            tf.reshape(rpn_label_logits, [-1]),
+            image_shape2d,
+            cfg.RPN.TRAIN_PRE_NMS_TOPK if self.training else cfg.RPN.TEST_PRE_NMS_TOPK,
+            cfg.RPN.TRAIN_POST_NMS_TOPK if self.training else cfg.RPN.TEST_POST_NMS_TOPK)
+
+        if self.training:
+            losses = rpn_losses(
+                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
+        else:
+            losses = []
+
+        return BoxProposals(proposal_boxes), losses
+
+    def roi_heads(self, image, features, proposals, targets):
+        image_shape2d = tf.shape(image)[2:]     # h,w
+        featuremap = features[0]
+
+        gt_boxes, gt_labels, *_ = targets
+
+        if self.training:
+            # sample proposal boxes in training
+            proposals = sample_fast_rcnn_targets(proposals.boxes, gt_boxes, gt_labels)
+        # The boxes to be used to crop RoIs.
+        # Use all proposal boxes in inference
+
+        boxes_on_featuremap = proposals.boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE)
+        roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
+
+        feature_fastrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])    # nxcx7x7
+        # Keep C5 feature to be shared with mask branch
+        feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CATEGORY)
+
+        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits, gt_boxes,
+                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
+
+        if self.training:
+            all_losses = fastrcnn_head.losses()
+
+            if cfg.MODE_MASK:
+                gt_masks = targets[2]
+                # maskrcnn loss
+                # In training, mask branch shares the same C5 feature.
+                fg_feature = tf.gather(feature_fastrcnn, proposals.fg_inds())
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', fg_feature, cfg.DATA.NUM_CATEGORY, num_convs=0)   # #fg x #cat x 14x14
+
+                target_masks_for_fg = crop_and_resize(
+                    tf.expand_dims(gt_masks, 1),
+                    proposals.fg_boxes(),
+                    proposals.fg_inds_wrt_gt, 14,
+                    pad_border=False)  # nfg x 1x14x14
+                target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
+                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
+            return all_losses
+        else:
+            decoded_boxes = fastrcnn_head.decoded_output_boxes()
+            decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
+            label_scores = fastrcnn_head.output_scores(name='fastrcnn_all_scores')
+            final_boxes, final_scores, final_labels = fastrcnn_predictions(
+                decoded_boxes, label_scores, name_scope='output')
+
+            if cfg.MODE_MASK:
+                roi_resized = roi_align(featuremap, final_boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE), 14)
+                feature_maskrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])
+                mask_logits = maskrcnn_upXconv_head(
+                    'maskrcnn', feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 0)   # #result x #cat x 14x14
+                indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
+                final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
                 tf.sigmoid(final_mask_logits, name='output/masks')
             return []

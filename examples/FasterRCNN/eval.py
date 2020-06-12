@@ -11,7 +11,7 @@ from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 import cv2
-# import pycocotools.mask as cocomask
+import pycocotools.mask as cocomask
 import tqdm
 from scipy import interpolate
 
@@ -173,9 +173,9 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
 
                 # also append segmentation to results
                 if r.mask is not None:
-                    # rle = cocomask.encode(
-                    #     np.array(r.mask[:, :, None], order='F'))[0]
-                    rle = {}
+                    rle = cocomask.encode(
+                        np.array(r.mask[:, :, None], order='F'))[0]
+                    # rle = {}
                     rle['counts'] = rle['counts'].decode('ascii')
                     res['segmentation'] = rle
                 all_results.append(res)
