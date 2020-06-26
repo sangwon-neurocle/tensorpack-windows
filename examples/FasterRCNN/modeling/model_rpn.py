@@ -126,6 +126,10 @@ def generate_rpn_proposals(boxes, scores, img_shape,
         post_nms_topk = pre_nms_topk
 
     topk = tf.minimum(pre_nms_topk, tf.size(scores))
+    print("scores")
+    print(scores)
+    print("topk")
+    print(topk)
     topk_scores, topk_indices = tf.nn.top_k(scores, k=topk, sorted=False)
     topk_boxes = tf.gather(boxes, topk_indices)
     topk_boxes = clip_boxes(topk_boxes, img_shape)

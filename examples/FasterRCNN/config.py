@@ -92,7 +92,8 @@ _C.MODE_MASK = True       # Faster R-CNN or Mask R-CNN
 _C.MODE_FPN = True
 
 # dataset -----------------------
-_C.DATA.BASEDIR = ''
+# _C.DATA.BASEDIR = ''
+_C.DATA.BASEDIR = "C:/Users/Sangwon Lee/Desktop/COCO"
 # _C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
 # _C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
 _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
@@ -117,7 +118,8 @@ _C.DATA.FILTER_EMPTY_ANNOTATIONS = True
 _C.DATA.NUM_WORKERS = 10
 
 # backbone ----------------------
-_C.BACKBONE.WEIGHTS = ''
+# _C.BACKBONE.WEIGHTS = ''
+_C.BACKBONE.WEIGHTS="ImageNet-R50-AlignPadding.npz"
 # To train from scratch, set it to empty, and set FREEZE_AT to 0
 # To train from ImageNet pre-trained models, use the one that matches your
 #   architecture from http://models.tensorpack.com under the 'FasterRCNN' section.
@@ -160,9 +162,11 @@ _C.TRAIN.CHECKPOINT_PERIOD = 20  # period (epochs) to save model
 
 # preprocessing --------------------
 # Alternative old (worse & faster) setting: 600
-_C.PREPROC.TRAIN_SHORT_EDGE_SIZE = [800, 800]  # [min, max] to sample from
+# _C.PREPROC.TRAIN_SHORT_EDGE_SIZE = [800, 800]  # [min, max] to sample from
+_C.PREPROC.TRAIN_SHORT_EDGE_SIZE = [500, 800]
 _C.PREPROC.TEST_SHORT_EDGE_SIZE = 800
-_C.PREPROC.MAX_SIZE = 1333
+# _C.PREPROC.MAX_SIZE = 1333
+_C.PREPROC.MAX_SIZE = 1024
 # mean and std in RGB order.
 # Un-scaled version: [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 _C.PREPROC.PIXEL_MEAN = [123.675, 116.28, 103.53]
@@ -198,7 +202,8 @@ _C.RPN.TRAIN_PER_LEVEL_NMS_TOPK = 2000
 _C.RPN.TEST_PER_LEVEL_NMS_TOPK = 1000
 
 # fastrcnn training ---------------------
-_C.FRCNN.BATCH_PER_IM = 512
+# _C.FRCNN.BATCH_PER_IM = 512
+_C.FRCNN.BATCH_PER_IM = 64
 _C.FRCNN.BBOX_REG_WEIGHTS = [10., 10., 5., 5.]  # Slightly better setting: 20, 20, 10, 10
 _C.FRCNN.FG_THRESH = 0.5
 _C.FRCNN.FG_RATIO = 0.25  # fg ratio in a ROI batch

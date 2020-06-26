@@ -31,6 +31,7 @@ else:
 
 
 def regularize_cost(regex, func, name='regularize_cost'):
+    print("regularize_cost")
     """
     Apply a regularizer on trainable variables matching the regex, and print
     the matched variables (only print once in multi-tower training).
@@ -73,6 +74,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
         for p in params:
             para_name = p.op.name
             if re.search(regex, para_name):
+                print("para_name")
+                print(para_name)
                 regloss = func(p)
                 assert regloss.dtype.is_floating, regloss
                 # Some variables may not be fp32, but it should
@@ -83,7 +86,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
                 names.append(p.name)
         if not costs:
             return tf.constant(0, dtype=tf.float32, name='empty_' + name)
-
+    print("names before")
+    print(names)
     # remove tower prefix from names, and print
     if len(ctx.vs_name):
         prefix = ctx.vs_name + '/'
@@ -94,6 +98,8 @@ def regularize_cost(regex, func, name='regularize_cost'):
                 return name[prefixlen:]
             return name
         names = list(map(f, names))
+    print("names after")
+    print(names)
     logger.info("regularize_cost() found {} variables to regularize.".format(len(names)))
     _log_once("The following tensors will be regularized: {}".format(', '.join(names)))
 

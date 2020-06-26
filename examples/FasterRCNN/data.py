@@ -135,6 +135,8 @@ class TrainingDataPreprocessor:
         if self.cfg.MODE_MASK:
             # augmentation will modify the polys in-place
             segmentation = copy.deepcopy(roidb["segmentation"])
+            print("segmetation")
+            print(segmentation)
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 
@@ -144,18 +146,33 @@ class TrainingDataPreprocessor:
             width_height = np.asarray([width, height], dtype=np.float32)
             gt_mask_width = int(np.ceil(im.shape[1] / 8.0) * 8)   # pad to 8 in order to pack mask into bits
 
-            for polys in segmentation:
+            for i, polys in enumerate(segmentation):
+                # print("polys.shape")
+                # print(polys.shape)
                 if not self.cfg.DATA.ABSOLUTE_COORD:
                     polys = [p * width_height for p in polys]
                 polys = [tfms.apply_coords(p) for p in polys]
-                masks.append(polygons_to_mask(polys, im.shape[0], gt_mask_width))
+                # print("polys.shape after")
+                # print(polys.shape)
+                mask = polygons_to_mask(polys, im.shape[0], gt_mask_width)
+                masks.append(mask)
+                print("mask.shape")
+                print(mask.shape)
+                # for m in mask:
+                #     if m.sum() > 0: print(m)
+                print("boxes[i]")
+                print(boxes[i])
 
             if len(masks):
                 masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
                 masks = np.packbits(masks, axis=-1)
             else:  # no gt on the image
                 masks = np.zeros((0, im.shape[0], gt_mask_width // 8), dtype='uint8')
-
+            print("masks")
+            print(masks.shape)
+            # print(masks)
+            print("im.shape")
+            print(im.shape)
             ret['gt_masks_packed'] = masks
 
             # from viz import draw_annotation, draw_mask
@@ -350,6 +367,9 @@ def get_train_dataflow():
     If MODE_MASK, gt_masks: (N, h, w)
     """
     roidbs = list(itertools.chain.from_iterable(DatasetRegistry.get(x).training_roidbs() for x in cfg.DATA.TRAIN))
+    print("roidbs")
+    print(roidbs[0])
+    # instances_Train.json[0]
     print_class_histogram(roidbs)
 
     # Filter out images that have no gt boxes, but this filter shall not be applied for testing.
@@ -363,10 +383,12 @@ def get_train_dataflow():
             num - len(roidbs), len(roidbs)
         )
     )
-
+    num = len(roidbs)
+    print(f"num : {num}")
     ds = DataFromList(roidbs, shuffle=True)
 
     preprocess = TrainingDataPreprocessor(cfg)
+    print(f"preprocess : {preprocess}")
     print(f"cfg.TRAINER : {cfg.TRAINER}")
     # if cfg.DATA.NUM_WORKERS > 0:
     #     if cfg.TRAINER == "horovod":
@@ -380,6 +402,7 @@ def get_train_dataflow():
     #     ds = MapData(ds, preprocess)
     # ds = BatchData(ds, BATCH_SIZE)
     ds = MapData(ds, preprocess)
+    print(f"ds : {ds}")
     return ds
 
 
@@ -390,6 +413,7 @@ def get_eval_dataflow(name, shard=0, num_shards=1):
         shard, num_shards: to get subset of evaluation data
     """
     roidbs = DatasetRegistry.get(name).inference_roidbs()
+    logger.info(f"get_eval_dataflow{name}")
     logger.info("Found {} images for inference.".format(len(roidbs)))
 
     num_imgs = len(roidbs)

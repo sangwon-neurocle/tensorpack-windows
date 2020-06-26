@@ -87,6 +87,10 @@ def point4_to_box(points):
     p = points.reshape((-1, 4, 2))
     minxy = p.min(axis=1)   # nx2
     maxxy = p.max(axis=1)   # nx2
+    # o = np.concatenate((minxy, maxxy), axis=1)
+    # print(f"point4_to_box({points})")
+    # print(f"output : {o}")
+    # return o
     return np.concatenate((minxy, maxxy), axis=1)
 
 

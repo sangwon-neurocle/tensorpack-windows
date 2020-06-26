@@ -119,12 +119,20 @@ def predict_image(img, model_func):
     Returns:
         [DetectionResult]
     """
+    print("predict_image")
+    print("model_func")
+    print(model_func)
     orig_shape = img.shape[:2]
     resizer = CustomResize(cfg.PREPROC.TEST_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)
     scale = np.sqrt(resized_img.shape[0] * 1.0 / img.shape[0] * resized_img.shape[1] / img.shape[1])
     boxes, probs, labels, *masks = model_func(resized_img)
-
+    print(f"boxes : {boxes}")
+    print(f"probs : {probs}")
+    print(f"labels : {labels}")
+    print(f"masks : {masks}")
+    # print(len(masks)) # 1
+    # print(masks[0].shape) # (11, 28, 28)
     # Some slow numpy postprocessing:
     boxes = boxes / scale
     # boxes are already clipped inside the graph, but after the floating point scaling, this may not be true any more.
@@ -154,6 +162,7 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
         list of dict, in the format used by
         `DatasetSplit.eval_inference_results`
     """
+    print("predict_dataflow")
     df.reset_state()
     all_results = []
     with ExitStack() as stack:
@@ -162,6 +171,8 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
             tqdm_bar = stack.enter_context(get_tqdm(total=df.size()))
         for img, img_id in df:
             results = predict_image(img, model_func)
+            print("results")
+            print(results)
             for r in results:
                 # int()/float() to make it json-serializable
                 res = {

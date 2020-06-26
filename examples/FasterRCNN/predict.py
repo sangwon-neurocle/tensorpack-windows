@@ -143,6 +143,12 @@ if __name__ == '__main__':
     if args.visualize:
         do_visualize(MODEL, args.load)
     else:
+        print("args.load")
+        print(type(args.load))
+        print(args.load)
+        print("args.evaluate")
+        print(type(args.evaluate))
+        print(args.evaluate)
         predcfg = PredictConfig(
             model=MODEL,
             session_init=SmartInit(args.load),

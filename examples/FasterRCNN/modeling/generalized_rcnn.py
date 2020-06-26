@@ -58,6 +58,7 @@ class GeneralizedRCNN(ModelDesc):
 
     def build_graph(self, *inputs):
         print(f"self.input_names : {self.input_names}")
+        print(F"inputs before : {inputs}")
         inputs = dict(zip(self.input_names, inputs))
         print(f"inputs : {inputs}")
         if "gt_masks_packed" in inputs:
@@ -91,6 +92,8 @@ class GeneralizedRCNN(ModelDesc):
         head_losses = self.roi_heads(image, features, proposals, targets)
 
         if self.training:
+            print("l2_regularizer")
+            print(l2_regularizer)
             wd_cost = regularize_cost(
                 '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
             total_cost = tf.add_n(
@@ -232,15 +235,29 @@ class ResNetFPNModel(GeneralizedRCNN):
             label_scores = fastrcnn_head.output_scores(name='fastrcnn_all_scores')
             final_boxes, final_scores, final_labels = fastrcnn_predictions(
                 decoded_boxes, label_scores, name_scope='output')
+            print("final_boxes")
+            print(final_boxes)
+            print("final_scores")
+            print(final_scores)
+            print("final_labels")
+            print(final_labels)
             if cfg.MODE_MASK:
                 # Cascade inference needs roi transform with refined boxes.
                 roi_feature_maskrcnn = multilevel_roi_align(features[:4], final_boxes, 14)
                 maskrcnn_head_func = getattr(model_mrcnn, cfg.FPN.MRCNN_HEAD_FUNC)
                 mask_logits = maskrcnn_head_func(
                     'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
+                print("mask_logits")
+                print(mask_logits)
                 indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
-                tf.sigmoid(final_mask_logits, name='output/masks')
+                a = tf.sigmoid(final_mask_logits, name='output/masks')
+                print("a")
+                print(a)
+                # mask_logits
+                # Tensor("tower0/maskrcnn/conv/output:0", shape=(?, 80, 28, 28), dtype=float32, device=/device:GPU:0)
+                # a
+                # Tensor("tower0/output/masks:0", shape=(?, 28, 28), dtype=float32, device=/device:GPU:0)
             return []
 
 
