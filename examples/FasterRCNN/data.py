@@ -156,23 +156,23 @@ class TrainingDataPreprocessor:
                 # print(polys.shape)
                 mask = polygons_to_mask(polys, im.shape[0], gt_mask_width)
                 masks.append(mask)
-                print("mask.shape")
-                print(mask.shape)
+                # print("mask.shape")
+                # print(mask.shape)
                 # for m in mask:
                 #     if m.sum() > 0: print(m)
-                print("boxes[i]")
-                print(boxes[i])
+                # print("boxes[i]")
+                # print(boxes[i])
 
             if len(masks):
                 masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
                 masks = np.packbits(masks, axis=-1)
             else:  # no gt on the image
                 masks = np.zeros((0, im.shape[0], gt_mask_width // 8), dtype='uint8')
-            print("masks")
-            print(masks.shape)
-            # print(masks)
-            print("im.shape")
-            print(im.shape)
+            # print("masks")
+            # print(masks.shape)
+            # # print(masks)
+            # print("im.shape")
+            # print(im.shape)
             ret['gt_masks_packed'] = masks
 
             # from viz import draw_annotation, draw_mask

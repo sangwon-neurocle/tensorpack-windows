@@ -126,8 +126,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.config:
         cfg.update_args(args.config)
-    register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
-    # register_DAGM(cfg.DATA.BASEDIR)
+    # register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    register_DAGM(cfg.DATA.BASEDIR)
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     if not tf.test.is_gpu_available():

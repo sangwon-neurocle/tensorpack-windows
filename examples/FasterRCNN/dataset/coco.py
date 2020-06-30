@@ -252,7 +252,7 @@ def register_DAGM(basedir):
 
     Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014.
     """
-    print("register_coco")
+    print("register_DAGM")
     # 80 names for COCO
     # For your own coco-format dataset, change this.
     # class_names = [

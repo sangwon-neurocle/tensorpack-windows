@@ -93,11 +93,13 @@ _C.MODE_FPN = True
 
 # dataset -----------------------
 # _C.DATA.BASEDIR = ''
-_C.DATA.BASEDIR = "C:/Users/Sangwon Lee/Desktop/COCO"
-# _C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
-# _C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
-_C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
-_C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
+# _C.DATA.BASEDIR = "C:/Users/Sangwon Lee/Desktop/COCO"
+# _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
+# _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
+_C.DATA.BASEDIR= "C:/Users/Sangwon Lee/Desktop/DAGM_6Class_6900ea_Opendata_191111/DAGM"
+_C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
+_C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
+
 
 # # All available dataset names are defined in `dataset/coco.py:register_coco`.
 # # All TRAIN dataset will be concatenated for training.

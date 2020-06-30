@@ -46,8 +46,8 @@ if __name__ == '__main__':
 
     print("cfg")
     print(f"{cfg}")
-    register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
-    # register_DAGM(cfg.DATA.BASEDIR)
+    # register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    register_DAGM(cfg.DATA.BASEDIR)
     # register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
 
     # Setup logging ...
@@ -127,7 +127,7 @@ if __name__ == '__main__':
         callbacks=callbacks,
         steps_per_epoch=stepnum,
         # max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
-        max_epoch=1,
+        max_epoch=50,
         session_init=session_init,
         starting_epoch=cfg.TRAIN.STARTING_EPOCH
     )
