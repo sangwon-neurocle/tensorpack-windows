@@ -135,8 +135,8 @@ class TrainingDataPreprocessor:
         if self.cfg.MODE_MASK:
             # augmentation will modify the polys in-place
             segmentation = copy.deepcopy(roidb["segmentation"])
-            print("segmetation")
-            print(segmentation)
+            # print("segmetation")
+            # print(segmentation)
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 
