@@ -18,7 +18,7 @@ from tensorpack.tfutils.export import ModelExporter
 from tensorpack.utils import fs, logger
 
 from dataset import DatasetRegistry, register_coco, register_balloon
-from dataset.coco import register_DAGM
+from dataset.coco import register_DAGM, register_Automobile, register_MVTEC
 from config import config as cfg
 from config import finalize_configs
 from data import get_eval_dataflow, get_train_dataflow
@@ -27,6 +27,7 @@ from modeling.generalized_rcnn import ResNetC4Model, ResNetFPNModel
 from viz import (
     draw_annotation, draw_final_outputs, draw_predictions,
     draw_proposal_recall, draw_final_outputs_blackwhite)
+import time
 
 
 def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
@@ -98,7 +99,10 @@ def do_evaluate(pred_config, output_file):
 
 def do_predict(pred_func, input_file):
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
+    # start_time = time.time()
     results = predict_image(img, pred_func)
+    # end_time = time.time()
+    # print(f"--------- Inference time : {end_time - start_time}seconds -----------------")
     if cfg.MODE_MASK:
         final = draw_final_outputs_blackwhite(img, results)
     else:
@@ -128,7 +132,9 @@ if __name__ == '__main__':
         cfg.update_args(args.config)
     # register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
     register_DAGM(cfg.DATA.BASEDIR)
-    MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
+    # register_Automobile(cfg.DATA.BASEDIR)
+    # register_MVTEC(cfg.DATA.BASEDIR)
+    MODEL = ResNetFPNModel()
 
     if not tf.test.is_gpu_available():
         from tensorflow.python.framework import test_util

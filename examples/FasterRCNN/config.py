@@ -96,9 +96,18 @@ _C.MODE_FPN = True
 # _C.DATA.BASEDIR = "C:/Users/Sangwon Lee/Desktop/COCO"
 # _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
 # _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
-_C.DATA.BASEDIR= "C:/Users/Sangwon Lee/Desktop/DAGM_6Class_6900ea_Opendata_191111/DAGM"
+
+_C.DATA.BASEDIR= "C:/Users/HyeongjinLim/Desktop/sangwon/DAGM"
 _C.DATA.TRAIN = ('DAGM_Train',)   # i.e. trainval35k
 _C.DATA.VAL = ('DAGM_Test',)  # AKA minival2014
+
+# _C.DATA.BASEDIR= "C:/Users/HyeongjinLim/Desktop/sangwon/Automobile"
+# _C.DATA.TRAIN = ('Automobile_Train',)   # i.e. trainval35k
+# _C.DATA.VAL = ('Automobile_Test',)  # AKA minival2014
+
+# _C.DATA.BASEDIR= "C:/Users/HyeongjinLim/Desktop/sangwon/MVTEC"
+# _C.DATA.TRAIN = ('MVTEC_Train',)   # i.e. trainval35k
+# _C.DATA.VAL = ('MVTEC_Test',)  # AKA minival2014
 
 
 # # All available dataset names are defined in `dataset/coco.py:register_coco`.
@@ -132,7 +141,8 @@ _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN, None
-_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
+# _C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
+_C.BACKBONE.FREEZE_AT = 2
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.

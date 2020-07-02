@@ -23,12 +23,15 @@ from common import CustomResize, clip_boxes
 from config import config as cfg
 from data import get_eval_dataflow
 from dataset import DatasetRegistry
+import time
 
 try:
     import horovod.tensorflow as hvd
 except ImportError:
     pass
 
+cnt = 0
+total_time = 0
 
 DetectionResult = namedtuple(
     'DetectionResult',
@@ -119,18 +122,25 @@ def predict_image(img, model_func):
     Returns:
         [DetectionResult]
     """
+    global total_time
+    global cnt
     print("predict_image")
-    print("model_func")
-    print(model_func)
+    # print("model_func")
+    # print(model_func)
     orig_shape = img.shape[:2]
     resizer = CustomResize(cfg.PREPROC.TEST_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)
     scale = np.sqrt(resized_img.shape[0] * 1.0 / img.shape[0] * resized_img.shape[1] / img.shape[1])
+    start_time = time.time()
     boxes, probs, labels, *masks = model_func(resized_img)
-    print(f"boxes : {boxes}")
-    print(f"probs : {probs}")
-    print(f"labels : {labels}")
-    print(f"masks : {masks}")
+    end_time = time.time()
+    cnt += 1
+    total_time += end_time - start_time
+    print(f"--------- Inference time : {total_time / cnt}seconds -----------------")
+    # print(f"boxes : {boxes}")
+    # print(f"probs : {probs}")
+    # print(f"labels : {labels}")
+    # print(f"masks : {masks}")
     # print(len(masks)) # 1
     # print(masks[0].shape) # (11, 28, 28)
     # Some slow numpy postprocessing:
@@ -173,6 +183,7 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
             results = predict_image(img, model_func)
             print("results")
             print(results)
+            
             for r in results:
                 # int()/float() to make it json-serializable
                 res = {

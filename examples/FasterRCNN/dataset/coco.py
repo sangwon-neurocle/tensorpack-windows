@@ -77,8 +77,9 @@ class COCODetection(DatasetSplit):
         cocoEval.evaluate()
         cocoEval.accumulate()
         cocoEval.summarize()
-        fields = ['IoU=0.5:0.95', 'IoU=0.5', 'IoU=0.75', 'small', 'medium', 'large']
-        for k in range(6):
+        # fields = ['IoU=0.5:0.95', 'IoU=0.5', 'IoU=0.75', 'small', 'medium', 'large']
+        fields = ['IoU=0.5']
+        for k in range(len(fields)):
             ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
         if len(results) > 0 and has_mask:
@@ -86,8 +87,10 @@ class COCODetection(DatasetSplit):
             cocoEval.evaluate()
             cocoEval.accumulate()
             cocoEval.summarize()
-            for k in range(6):
+            for k in range(len(fields)):
                 ret['mAP(segm)/' + fields[k]] = cocoEval.stats[k]
+        print("ret")
+        print(ret)
         return ret
 
     def load(self, add_gt=True, add_mask=False):
@@ -264,6 +267,52 @@ def register_DAGM(basedir):
     #               "valminusminival2014", "minival2014", "val2017_100"]:
     for split in ["Train", "Test"]:        
         name = "DAGM_" + split
+        # name = "coco_" + split
+        DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
+        DatasetRegistry.register_metadata(name, 'class_names', class_names)
+
+def register_MVTEC(basedir):
+    """
+    Add COCO datasets like "coco_train201x" to the registry,
+    so you can refer to them with names in `cfg.DATA.TRAIN/VAL`.
+
+    Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014.
+    """
+    print("register_MVTEC")
+    # 80 names for COCO
+    # For your own coco-format dataset, change this.
+    # class_names = [
+    #     "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
+    # class_names = ["BG"] + class_names
+    class_names = ['toothbrush', 'transistor', 'pill', 'zipper', 'carpet', 'hazelnut', 'grid', 'metal', 'capsule', 'bottle', 'cable', 'leather', 'tile', 'screw', 'wood']
+    class_names = ["BG"] + class_names
+    # for split in ["train2017", "val2017", "train2014", "val2014",
+    #               "valminusminival2014", "minival2014", "val2017_100"]:
+    for split in ["Train", "Test"]:        
+        name = "MVTEC_" + split
+        # name = "coco_" + split
+        DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
+        DatasetRegistry.register_metadata(name, 'class_names', class_names)
+
+def register_Automobile(basedir):
+    """
+    Add COCO datasets like "coco_train201x" to the registry,
+    so you can refer to them with names in `cfg.DATA.TRAIN/VAL`.
+
+    Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014.
+    """
+    print("register_Automobile")
+    # 80 names for COCO
+    # For your own coco-format dataset, change this.
+    # class_names = [
+    #     "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
+    # class_names = ["BG"] + class_names
+    class_names = ['class1', 'class0']
+    class_names = ["BG"] + class_names
+    # for split in ["train2017", "val2017", "train2014", "val2014",
+    #               "valminusminival2014", "minival2014", "val2017_100"]:
+    for split in ["Train", "Test"]:        
+        name = "Automobile_" + split
         # name = "coco_" + split
         DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
         DatasetRegistry.register_metadata(name, 'class_names', class_names)

@@ -102,40 +102,23 @@ def draw_final_outputs_blackwhite(img, results):
         results: [DetectionResult]
     """
     img_bw = img.mean(axis=2)
-    img_bw = np.zeros((img.shape[0], img.shape[1]))
-    print("img_bw.shape")
-    print(img_bw.shape)
     img_bw = np.stack([img_bw] * 3, axis=2)
 
     if len(results) == 0:
         return img_bw
 
-    # boxes = np.asarray([r.box for r in results])
-    # all_masks = [r.mask for r in results]
-    boxes = np.asarray([results[0].box])
-    all_masks = [results[0].mask]
-    # print(f"results : {results}")
-    # print(f"boxes : {boxes}")
-    # print(f"all_masks : {all_masks}")
-    # summ = 0
-    # for mask in all_masks:
-    #     summ += mask.sum()
-    # print(f"all_masks.sum() : {summ}")
+    boxes = np.asarray([r.box for r in results])
 
+    all_masks = [r.mask for r in results]
     if all_masks[0] is not None:
         m = all_masks[0] > 0
         for m2 in all_masks[1:]:
             m = m | (m2 > 0)
-        # img_bw[m] = img[m]
-        img_bw[m] = 255
+        img_bw[m] = img[m]
 
-    # tags = ["{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score) for r in results]
-    print("results[0].class_id")
-    print(results[0].class_id)
-    tags = ["{},{:.2f}".format(cfg.DATA.CLASS_NAMES[results[0].class_id], results[0].score)]
+    tags = ["{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score) for r in results]
     ret = viz.draw_boxes(img_bw, boxes, tags)
     return ret
-
 
 def draw_mask(im, mask, alpha=0.5, color=None):
     """

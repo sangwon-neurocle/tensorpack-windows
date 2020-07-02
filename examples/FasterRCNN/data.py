@@ -135,8 +135,8 @@ class TrainingDataPreprocessor:
         if self.cfg.MODE_MASK:
             # augmentation will modify the polys in-place
             segmentation = copy.deepcopy(roidb["segmentation"])
-            print("segmetation")
-            print(segmentation)
+            # print("segmetation")
+            # print(segmentation)
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 
@@ -368,7 +368,10 @@ def get_train_dataflow():
     """
     roidbs = list(itertools.chain.from_iterable(DatasetRegistry.get(x).training_roidbs() for x in cfg.DATA.TRAIN))
     print("roidbs")
-    print(roidbs[0])
+    for r in roidbs:
+        if r['class']:
+            print(r)
+    # print(roidbs[0])
     # instances_Train.json[0]
     print_class_histogram(roidbs)
 
