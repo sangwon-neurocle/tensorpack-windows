@@ -128,7 +128,7 @@ if __name__ == '__main__':
         callbacks=callbacks,
         steps_per_epoch=stepnum,
         # max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
-        max_epoch=50,
+        max_epoch=10,
         session_init=session_init,
         starting_epoch=cfg.TRAIN.STARTING_EPOCH
     )
