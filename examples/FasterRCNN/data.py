@@ -367,10 +367,6 @@ def get_train_dataflow():
     If MODE_MASK, gt_masks: (N, h, w)
     """
     roidbs = list(itertools.chain.from_iterable(DatasetRegistry.get(x).training_roidbs() for x in cfg.DATA.TRAIN))
-    print("roidbs")
-    for r in roidbs:
-        if r['class']:
-            print(r)
     # print(roidbs[0])
     # instances_Train.json[0]
     print_class_histogram(roidbs)
